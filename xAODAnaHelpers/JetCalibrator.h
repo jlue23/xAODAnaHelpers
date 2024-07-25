@@ -27,6 +27,14 @@
 // algorithm wrapper
 #include "xAODAnaHelpers/Algorithm.h"
 
+
+
+// in order to run the Large Radius UFO JetCalibration
+#include "AsgServices/ServiceHandle.h"
+#include "AthOnnxruntimeService/IONNXRuntimeSvc.h"
+#include "AthOnnxruntimeService/ONNXRuntimeSvc.h"
+#include <AsgServices/AsgServiceConfig.h>
+
 /** @rst
   A wrapper to a few JetETMiss packages. By setting the configuration parameters detailed in the header documentation, one can:
 

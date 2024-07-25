@@ -664,13 +664,13 @@ EL::StatusCode BasicEventSelection :: execute ()
   // events, e.g. read input variables, apply cuts, and fill
   // histograms and trees.  This is where most of your actual analysis
   // code will go.
-
+ 
   ANA_MSG_DEBUG( "Basic Event Selection");
 
   // Print every 1000 entries, so we know where we are:
   //
   if ( (m_eventCounter % 1000) == 0 ) {
-    ANA_MSG_INFO( "Entry number = " << m_eventCounter);
+    ANA_MSG_INFO( "Basic Event Selection: Entry number = " << m_eventCounter);
     ANA_MSG_VERBOSE( "Store Content:");
     if(msgLvl(MSG::VERBOSE)) m_store->print();
     ANA_MSG_VERBOSE( "End Content");
@@ -1195,7 +1195,7 @@ StatusCode BasicEventSelection::autoconfigurePileupRWTool()
       mcCampaignMD="mc23d";
       break;
     default :
-      ANA_MSG_ERROR( "Could not determine mc campaign from run number! Impossible to autoconfigure PRW. Aborting." );
+      ANA_MSG_ERROR( "Could not determine mc campaign from run number! (mc20a,mc20d,mc20e, mc23a, mc23d) Impossible to autoconfigure PRW. Aborting." );
       return StatusCode::FAILURE;
       break;
     }
@@ -1409,7 +1409,7 @@ EL::StatusCode BasicEventSelection :: postExecute ()
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
-
+  
   return EL::StatusCode::SUCCESS;
 }
 
@@ -1427,7 +1427,7 @@ EL::StatusCode BasicEventSelection :: finalize ()
   // merged.  This is different from histFinalize() in that it only
   // gets called on worker nodes that processed input events.
 
-  ANA_MSG_INFO( "Number of processed events \t= " << m_eventCounter);
+  ANA_MSG_INFO( "Basic Event Selection: Number of processed events \t= " << m_eventCounter);
 
   m_RunNr_VS_EvtNr.clear();
 

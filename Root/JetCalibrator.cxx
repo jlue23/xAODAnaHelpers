@@ -40,6 +40,8 @@
 // #include "JetTileCorrection/JetTileCorrectionTool.h"
 #include "METUtilities/METHelpers.h"
 
+#include "AthOnnxruntimeService/IONNXRuntimeSvc.h"
+
 // this is needed to distribute the algorithm to the workers
 ClassImp(JetCalibrator)
 
@@ -95,6 +97,7 @@ EL::StatusCode JetCalibrator :: changeInput (bool /*firstFile*/)
   // Here you do everything you need to do when we change input files,
   // e.g. resetting branch addresses on trees.  If you are using
   // D3PDReader or a similar service this method is not needed.
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -153,7 +156,7 @@ EL::StatusCode JetCalibrator :: initialize ()
 
   if ( !isMC() ) {
     // Insitu should not be applied to the trimmed jets, per Jet/Etmiss recommendation
-    if ( m_forceInsitu && m_calibSequence.find("Insitu") == std::string::npos) m_calibSequence += "_Insitu";
+    if ( m_forceInsitu && m_calibSequence.find("Insitu") == std::string::npos) m_calibSequence += "_Insitu";  
 
     m_calibConfig = m_calibConfigData;
   } else {
@@ -171,6 +174,18 @@ EL::StatusCode JetCalibrator :: initialize ()
     ANA_MSG_ERROR("MCType not provided, please set m_uncertMCType (MC20 or MC21) when running on FullSim samples.  Exiting.");
     return EL::StatusCode::FAILURE;
   }
+
+
+  // asg::AsgServiceConfig config ("AthONNX::ONNXRuntimeSvc/AthONNXSvc");
+  // std::shared_ptr<AthONNX::IONNXRuntimeSvc> service;
+  // ANA_CHECK(config.makeService (service));
+ 
+  // in order to run the Large Radius UFO JetCalibrations
+  // Create ONNX service for LargeRDNN calibration
+  asg::AsgServiceConfig config ("AthONNX::ONNXRuntimeSvc/AthONNXSvc");
+  std::shared_ptr<AthONNX::IONNXRuntimeSvc> service;
+  ANA_CHECK(config.makeService (service));
+
 
   // Autoconfigure calibration sequence if the user didn't do it.
   // Recommended strings taken from ApplyJetCalibrationR21 Twiki.
@@ -211,13 +226,17 @@ EL::StatusCode JetCalibrator :: initialize ()
   }
 
   // initialize jet calibration tool
+
   ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetCalibrationTool_handle, JetCalibrationTool));
+  std::cout<<"flag m_jetAlgo= "<<m_jetAlgo<<std::endl;
   ANA_CHECK( m_JetCalibrationTool_handle.setProperty("JetCollection",m_jetAlgo));
   if(!m_calibConfigDir.empty()){
     ANA_CHECK( m_JetCalibrationTool_handle.setProperty("ConfigDir",m_calibConfigDir));
   }
   ANA_CHECK( m_JetCalibrationTool_handle.setProperty("ConfigFile",m_calibConfig));
   ANA_CHECK( m_JetCalibrationTool_handle.setProperty("CalibSequence",m_calibSequence));
+
+  std::cout<<"flag m_calibSequence= "<<m_calibSequence<<std::endl;
   if ( !m_overrideCalibArea.empty() ) {
     ANA_MSG_WARNING("Overriding jet calibration area to " << m_overrideCalibArea);
     ANA_CHECK( m_JetCalibrationTool_handle.setProperty("CalibArea", m_overrideCalibArea));
@@ -242,8 +261,12 @@ EL::StatusCode JetCalibrator :: initialize ()
       ANA_CHECK( m_JetCalibrationTool_handle.setProperty("NPVKey", m_EvtInfoHLTNPVDecor) );
     }
   }
-  ANA_CHECK( m_JetCalibrationTool_handle.retrieve());
+
+  std::cout<<"flag m_JetCalibrationTool_handle= "<<m_JetCalibrationTool_handle<<std::endl;
+  ANA_CHECK( m_JetCalibrationTool_handle.retrieve()); 
   ANA_MSG_DEBUG("Retrieved tool: " << m_JetCalibrationTool_handle);
+  std::cout<<"flag m_JetCalibrationTool_handle= "<<m_JetCalibrationTool_handle<<std::endl;
+  
 
   // initialize jet tile correction tool
   // if(m_doJetTileCorr && !isMC()){ // Jet Tile Correction should only be applied to data
@@ -468,7 +491,7 @@ EL::StatusCode JetCalibrator :: execute ()
     ANA_MSG_ERROR( m_name );
     return StatusCode::FAILURE;
   }
-
+  
   // Need to be adapted to use full jet container (once tool works in R22)
   // if(m_doJetTileCorr && !isMC()){
   //   if( m_JetTileCorrectionTool_handle->applyCorrection(*jet_itr) == CP::CorrectionCode::Error ){
@@ -478,6 +501,7 @@ EL::StatusCode JetCalibrator :: execute ()
 
   // loop over available systematics - remember syst == "Nominal" --> baseline
   auto vecOutContainerNames = std::make_unique< std::vector< std::string > >();
+// std::cout<<"~~~~~~~~~~~~~~~~~~~################### flag JetCalibrator: applying jet calibration ###########################~~~~~~~~~~~~~~~~~~~~~~~~~~"<< m_store << std::endl;
 
   for ( const auto& syst_it : m_systList ) {
 
